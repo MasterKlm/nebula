@@ -14,7 +14,9 @@ class TransformComponent : public Component
     int width = 100;
     int height = 100;
     int scale = 1;
-    float speed = 4.0f;
+    float mass = 1.0f;
+    
+    float acceleration = 0.0f;
     Uint32 lastTicks = SDL_GetTicks();
     Vector2d prevPos;
 
@@ -33,13 +35,14 @@ class TransformComponent : public Component
         position.y = y;
         prevPos = position;
     }
-    TransformComponent(float x, float y, int w, int h, int sc)
+    TransformComponent(float x, float y, int w, int h, int sc, float m)
     {
         position.x = x;
         position.y = y;
         width = w;
         height = h;
         scale = sc; 
+        mass = m;
         prevPos = position;
 
     }
@@ -50,20 +53,8 @@ class TransformComponent : public Component
         }
         void update() override
         {
-            
-            Uint32 now = SDL_GetTicks();
-            float dt = (now - lastTicks) / 1000.0f;
-            if (dt <= 0.0f) dt = 1.0f/60.0f; // fallback
-
-            Vector2d distance(position.x - prevPos.x, position.y - prevPos.y);
-            Vector2d newVelocity(distance.x / dt, distance.y / dt);
-            
-            
-            velocity = newVelocity;
-            
-
-            lastTicks = now;
-            prevPos = position; 
+           position.x = position.x - Game::camera.x;
+           position.y = position.y - Game::camera.y;
         
         }
 };

@@ -7,6 +7,7 @@
 #include "KeyboardController.h"
 #include "ColliderComponent.h"
 #include "Thruster.h"
+#include "Inventory.h"
 
 
 

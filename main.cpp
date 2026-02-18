@@ -1,4 +1,6 @@
 #include "game.h"
+#include <SDL2/SDL_ttf.h>
+
 #define CELL_SIZE 32
 
 Game* game = nullptr;
@@ -6,8 +8,8 @@ Game* game = nullptr;
 int main(int args, char* argv[])
 {
 
+    TTF_Init();
     game = new Game();
-
     const int FPS = 60;
 
     const int frameDelay = 1000/FPS;
@@ -31,6 +33,7 @@ int main(int args, char* argv[])
 
     }
 
+    TTF_Quit();
     
 
     delete game;
