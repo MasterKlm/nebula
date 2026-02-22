@@ -24,6 +24,12 @@ class Text
             this->y = y;
             this->renderer = rend;
             
+            if(!renderer)
+            {
+                std::cout << "Error: renderer is null" << "\n";
+                return;
+            }
+
             font = TTF_OpenFont(fontPath, size);
             if(!font){
                 std::cout << "Error loading font" << "\n";
@@ -36,6 +42,7 @@ class Text
                 TTF_CloseFont(font);
                 return;
             }
+
 
             texture = SDL_CreateTextureFromSurface(renderer, surface);
             dstRect = {x, y, surface->w, surface->h};

@@ -5,6 +5,7 @@
 #include <cmath>
 
 
+
 SDL_Renderer* Game::renderer = nullptr;
 float Game::dt = 1.0f;
 Manager manager;
@@ -12,6 +13,9 @@ SDL_Event Game::event;
 Vector2d Game::camera;
 int Game::WINDOW_WIDTH = 800;
 int Game::WINDOW_HEIGHT = 600;
+Text* launchTimerText = nullptr;
+Text* liftOffText = nullptr;
+Text* gravityText = nullptr;
 
 auto& rocket(manager.addEntity());
 auto& n1Thruster(manager.addEntity());
@@ -53,7 +57,8 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
                         isRunning = true;
 
                         // create FPS text
-                        fpsText = std::make_unique<Text>("assets/fonts/PixelifySans-Bold.ttf", "FPS: 0", 16, SDL_Color{0,0,0,255}, 10, 40, renderer);
+                        fpsText = std::make_unique<Text>("assets/fonts/PixelifySans-Regular.ttf", "FPS: 0", 16, SDL_Color{0,0,0,255}, 10, 40, renderer);
+                       
             }
         }
 
@@ -82,7 +87,21 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
     n1Thruster.addComponent<ColliderComponent>("thuster");
     n1Thruster.addComponent<KeyboardController>();
     rocket.getComponent<Inventory>().add("thrusters", std::make_unique<Thruster>(n1Thruster.getComponent<Thruster>()));
+
+
+    launchTimerText = new Text("assets/fonts/PixelifySans-Bold.ttf", std::string("Launching in: ") + std::to_string(launchTime), 25, SDL_Color{0,0,0,150}, WINDOW_WIDTH/3, 20, renderer);
+    gravityText = new Text("assets/fonts/PixelifySans-Regular.ttf", "Gravity: " + std::to_string(manager.gravity), 16, SDL_Color{0,0,0,255}, 10, 70, renderer);
+    
 }   
+
+void Game::startTimer()
+{
+    for(int i = launchTime; i >= 0; i--){
+        timerCount = i;
+        std::this_thread::sleep_for(1s);
+    }
+    launched = true;
+}
 
 void Game::update()
 {
@@ -90,10 +109,28 @@ void Game::update()
     manager.refresh();
     manager.update();
 
- static Uint32 prevTicks = SDL_GetTicks();
+    static Uint32 prevTicks = SDL_GetTicks();
     Uint32 now = SDL_GetTicks();
     float frameDt = (now - prevTicks) / 1000.0f;
     prevTicks = now;
+
+   
+    if(timerCount >= 0 && launchTimerText){
+        launchTimerText->setText("Launching in: " + std::to_string(timerCount.load()), SDL_Color{0,0,0,150});
+    }   
+
+    if(launched && launchTimerText){
+        delete launchTimerText;
+        launchTimerText = nullptr;
+
+        liftOffText = new Text("assets/fonts/PixelifySans-Bold.ttf", "Liftoff! Press W to engage Thrusters", 20, SDL_Color{0,0,0,255}, WINDOW_WIDTH/3, 20, renderer);
+    }
+   
+    if(launchTimerText && !launched && !timerStarted){
+        timerStarted = true;
+        std::thread startTimerWorker(&Game::startTimer, this);
+        startTimerWorker.detach();
+    }
     // update FPS display
     if (fpsText) {
         int fps = 0;
@@ -213,7 +250,11 @@ void Game::render()
     
 
     manager.draw();
+    
     if (fpsText) fpsText->render();
+    if (launchTimerText) launchTimerText->render();
+    if (liftOffText) liftOffText->render();
+    if (gravityText) gravityText->render();
 
     SDL_RenderPresent(renderer);
 }
@@ -223,6 +264,11 @@ bool Game::running()
 }
 void Game::clean()
 {
+
+    if(liftOffText) delete liftOffText;
+    if(gravityText) delete gravityText;
+    if(launchTimerText) delete launchTimerText;
+    
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

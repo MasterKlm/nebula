@@ -17,7 +17,7 @@ class KeyboardController : public Component
         {
             transform = &entity->getComponent<TransformComponent>();
             // create persistent Text to be drawn in draw()
-            thrusterAccelerationText = std::make_unique<Text>("assets/fonts/PixelifySans-Bold.ttf",
+            thrusterAccelerationText = std::make_unique<Text>("assets/fonts/PixelifySans-Regular.ttf",
                                                               "Thrust Acceleration: 0",
                                                               15, SDL_Color({0,0,0}), 10, 10, Game::renderer); // { changed code }
         }

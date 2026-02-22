@@ -7,7 +7,7 @@ Game* game = nullptr;
 
 int main(int args, char* argv[])
 {
-
+    
     TTF_Init();
     game = new Game();
     const int FPS = 60;
