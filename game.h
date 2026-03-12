@@ -8,7 +8,6 @@
 #include "Text.h"
 #include <chrono>
 #include <thread>
-#include <memory>
 #include <atomic>
 
 

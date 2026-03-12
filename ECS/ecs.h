@@ -123,6 +123,8 @@ class Manager
 public:
     std::vector<std::unique_ptr<Entity>> entities;
     float gravity = 5.9f;
+    float air_density = 2.5f;
+    
     void update()
     {
         for(auto& e : entities) e->update();

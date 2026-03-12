@@ -1,7 +1,8 @@
 #ifndef THRUSTER_H
 #define THRUSTER_H
 
-#include "components.h"
+#include "ecs.h"
+#include <string>
 
 
 struct N1Thruster 

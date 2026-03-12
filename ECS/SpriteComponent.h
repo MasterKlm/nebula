@@ -1,13 +1,17 @@
 #ifndef SPRITECOMPONENT_H
 #define SPRITECOMPONENT_H
-#include "components.h"
+#include "ecs.h"
 #include <SDL2/SDL.h>
 #include "../TextureManager.h"
 #include "TransformComponent.h"
+#include "../game.h"
+
 
 class SpriteComponent : public Component
 {
     public:
+        SDL_Rect srcRect, destRect;
+
         SpriteComponent() = default;
         SpriteComponent(const char* path)
         {
@@ -33,8 +37,8 @@ class SpriteComponent : public Component
 
         void update() override
         {
-            destRect.x = (int)transform->position.x;
-            destRect.y = (int)transform->position.y;
+            destRect.x = (int)(transform->position.x - Game::camera.x);
+            destRect.y = (int)(transform->position.y - Game::camera.y);
             destRect.w = transform->width * transform->scale;
             destRect.h = transform->height * transform->scale;
         }
@@ -48,7 +52,6 @@ class SpriteComponent : public Component
         TransformComponent *transform;
         SDL_Texture *texture;
 
-        SDL_Rect srcRect, destRect;
 
 
 };

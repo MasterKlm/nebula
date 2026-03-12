@@ -13,7 +13,7 @@ class Inventory : public Component
 {
     public:
         std::vector<std::unique_ptr<Thruster>> thrusters;
-        int maxThrusters = 3;
+        int maxThrusters = 2;
        
 
 

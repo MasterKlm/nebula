@@ -3,7 +3,8 @@
 #include <string>
 #include <SDL2/SDL.h>
 #include "ecs.h"
-#include "components.h"
+
+class TransformComponent;
 
 class ColliderComponent : public Component
 {

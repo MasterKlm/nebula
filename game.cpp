@@ -1,6 +1,13 @@
 #include "game.h"
 #include "TextureManager.h"
 #include "ECS/components.h"
+#include "ECS/TransformComponent.h"
+#include "ECS/KeyboardController.h"
+#include "ECS/SpriteComponent.h"
+#include "ECS/Rocket.h"
+#include "ECS/ColliderComponent.h"
+#include "ECS/Thruster.h"
+#include "ECS/Inventory.h"
 #include "Text.h"
 #include <cmath>
 
@@ -16,10 +23,11 @@ int Game::WINDOW_HEIGHT = 600;
 Text* launchTimerText = nullptr;
 Text* liftOffText = nullptr;
 Text* gravityText = nullptr;
-
+auto& sky_box(manager.addEntity());
 auto& rocket(manager.addEntity());
 auto& n1Thruster(manager.addEntity());
 auto& launchPad(manager.addEntity());
+auto& n1Thruster_2(manager.addEntity());
 
 
 Game::Game()
@@ -44,7 +52,7 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
     if(SDL_Init(SDL_INIT_EVERYTHING)==0)
     {
         std::cout << "Subsystems loaded" << "\n";
-
+        TTF_Init();
         window = SDL_CreateWindow(title, xpos, ypos, width, height, flag);
         if(window)
         {
@@ -54,10 +62,10 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
             {
                 std::cout << "Renderer Created Successfully" << "\n";
                 SDL_SetRenderDrawColor(renderer, 255, 255, 255,255);
-                        isRunning = true;
-
-                        // create FPS text
-                        fpsText = std::make_unique<Text>("assets/fonts/PixelifySans-Regular.ttf", "FPS: 0", 16, SDL_Color{0,0,0,255}, 10, 40, renderer);
+                isRunning = true;
+                
+                // create FPS text
+                fpsText = std::make_unique<Text>("assets/fonts/PixelifySans-Regular.ttf", "FPS: 0", 16, SDL_Color{0,0,0,255}, 10, 40, renderer);
                        
             }
         }
@@ -70,28 +78,45 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
     launchPad.addComponent<SpriteComponent>("assets/floor.png");
     launchPad.addComponent<ColliderComponent>("launchPad");
 
+    sky_box.addComponent<TransformComponent>(0.0f, 0.0f, WINDOW_WIDTH, WINDOW_HEIGHT, 1, 1.0f);
+    sky_box.addComponent<SpriteComponent>("assets/sky_box.png");
+    
+
     rocket.addComponent<TransformComponent>(400.0f, 400.0f, 100, 100, 1, 50.0f);
     Game::camera = Vector2d(400.0f, 400.0f);
     rocket.addComponent<SpriteComponent>("assets/nebularocket1.png");
     rocket.addComponent<ColliderComponent>("rocket");
     
     rocket.addComponent<Inventory>();
+    rocket.addComponent<Rocket>("k_r");
 
     n1Thruster.addComponent<Thruster>(N1Thruster(), "n1");
+    n1Thruster_2.addComponent<Thruster>(N1Thruster(), "n1_#2");
     n1Thruster.addComponent<TransformComponent>(
         rocket.getComponent<TransformComponent>().position.x + (float)rocket.getComponent<TransformComponent>().width/4,
         rocket.getComponent<TransformComponent>().position.y + (float)rocket.getComponent<TransformComponent>().height,
         rocket.getComponent<TransformComponent>().width/3,  rocket.getComponent<TransformComponent>().height/4, 1, n1Thruster.getComponent<Thruster>().mass 
     );
+    n1Thruster_2.addComponent<TransformComponent>(
+        rocket.getComponent<TransformComponent>().position.x + (float)rocket.getComponent<TransformComponent>().width/4,
+        rocket.getComponent<TransformComponent>().position.y + (float)rocket.getComponent<TransformComponent>().height,
+        rocket.getComponent<TransformComponent>().width/3,  rocket.getComponent<TransformComponent>().height/4, 1, n1Thruster_2.getComponent<Thruster>().mass 
+    );
     n1Thruster.addComponent<SpriteComponent>("assets/n1thruster.png");
     n1Thruster.addComponent<ColliderComponent>("thuster");
     n1Thruster.addComponent<KeyboardController>();
+
+    n1Thruster_2.addComponent<SpriteComponent>("assets/n1thruster.png");
+    n1Thruster_2.addComponent<ColliderComponent>("thuster");
+    n1Thruster_2.addComponent<KeyboardController>();
     rocket.getComponent<Inventory>().add("thrusters", std::make_unique<Thruster>(n1Thruster.getComponent<Thruster>()));
+    rocket.getComponent<Inventory>().add("thrusters", std::make_unique<Thruster>(n1Thruster_2.getComponent<Thruster>()));
 
 
-    launchTimerText = new Text("assets/fonts/PixelifySans-Bold.ttf", std::string("Launching in: ") + std::to_string(launchTime), 25, SDL_Color{0,0,0,150}, WINDOW_WIDTH/3, 20, renderer);
+    launchTimerText = new Text("assets/fonts/PixelifySans-Bold.ttf", std::string("Launching in: ") + std::to_string(launchTime), 16, SDL_Color{0,0,0,150}, WINDOW_WIDTH/2, 10, renderer);
     gravityText = new Text("assets/fonts/PixelifySans-Regular.ttf", "Gravity: " + std::to_string(manager.gravity), 16, SDL_Color{0,0,0,255}, 10, 70, renderer);
-    
+
+
 }   
 
 void Game::startTimer()
@@ -123,7 +148,7 @@ void Game::update()
         delete launchTimerText;
         launchTimerText = nullptr;
 
-        liftOffText = new Text("assets/fonts/PixelifySans-Bold.ttf", "Liftoff! Press W to engage Thrusters", 20, SDL_Color{0,0,0,255}, WINDOW_WIDTH/3, 20, renderer);
+        liftOffText = new Text("assets/fonts/PixelifySans-Bold.ttf", "Liftoff! Press W to engage Thrusters", 15, SDL_Color{0,0,0,255}, WINDOW_WIDTH/3, 10, renderer);
     }
    
     if(launchTimerText && !launched && !timerStarted){
@@ -148,7 +173,8 @@ void Game::update()
         // integrate velocity and position
         for (auto& ePtr : manager.entities) {
             Entity* e = ePtr.get();
-            if (e == &launchPad) continue; // skip pad
+            if (e == &launchPad) continue; // skip gravity
+            if (e == &sky_box) continue; // skip gravity
            
             
             if (e->hasComponent<TransformComponent>()) {
@@ -204,7 +230,8 @@ void Game::update()
             }
         }
 
-        for (auto& thruster: rocket.getComponent<Inventory>().thrusters){
+        if(rocket.hasComponent<Inventory>()){
+            for (auto& thruster: rocket.getComponent<Inventory>().thrusters){
             auto thc = thruster.get()->entity->getComponent<ColliderComponent>();
                 if( thruster.get()->entity->hasComponent<ColliderComponent>() && rocket.hasComponent<ColliderComponent>()){
                     if(Collision::AABB(thc.collider, rocket.getComponent<ColliderComponent>().collider)){
@@ -221,11 +248,12 @@ void Game::update()
                     }
                 }
             }
-        Game::camera.x = rocket.getComponent<TransformComponent>().position.x - WINDOW_WIDTH/2;
-        Game::camera.y = rocket.getComponent<TransformComponent>().position.y - WINDOW_HEIGHT/2;
+                Game::camera.x = rocket.getComponent<TransformComponent>().position.x - WINDOW_WIDTH/2;
+                Game::camera.y = rocket.getComponent<TransformComponent>().position.y - WINDOW_HEIGHT/2;
 
-        remaining -= dt;
-    }
+                remaining -= dt;
+            }
+        }
 
     //std::cout << "x: " << rocket.getComponent<TransformComponent>().position.x
     //          << ", y: " << rocket.getComponent<TransformComponent>().position.y << ", velocityY: " << rocket.getComponent<TransformComponent>().velocity.y << "\n";
@@ -248,7 +276,6 @@ void Game::render()
 {
     SDL_RenderClear(renderer);
     
-
     manager.draw();
     
     if (fpsText) fpsText->render();
@@ -268,9 +295,11 @@ void Game::clean()
     if(liftOffText) delete liftOffText;
     if(gravityText) delete gravityText;
     if(launchTimerText) delete launchTimerText;
-    
+   
+    TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    
     SDL_Quit();
 
 

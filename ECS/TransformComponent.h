@@ -1,8 +1,8 @@
 #ifndef TRANSFORMCOMPONENT_H
 #define TRANSFORMCOMPONENT_H
-#include "components.h"
+#include "ecs.h"
+#include <SDL2/SDL.h>
 #include "../Vector2d.h"
-
 
 class TransformComponent : public Component
 {
@@ -15,6 +15,7 @@ class TransformComponent : public Component
     int height = 100;
     int scale = 1;
     float mass = 1.0f;
+    
     
     float acceleration = 0.0f;
     Uint32 lastTicks = SDL_GetTicks();
@@ -35,6 +36,12 @@ class TransformComponent : public Component
         position.y = y;
         prevPos = position;
     }
+    TransformComponent(int w, int h)
+    {
+        width = w;
+        height = h;
+        prevPos = position;
+    }
     TransformComponent(float x, float y, int w, int h, int sc, float m)
     {
         position.x = x;
@@ -53,9 +60,7 @@ class TransformComponent : public Component
         }
         void update() override
         {
-           position.x = position.x - Game::camera.x;
-           position.y = position.y - Game::camera.y;
-        
+            // Transform is a pure data component; camera offset is applied by render components.
         }
 };
 
