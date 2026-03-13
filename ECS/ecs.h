@@ -6,6 +6,7 @@
 #include <bitset>
 #include <array>
 #include <algorithm>
+#include <iostream>
 
 
 
@@ -64,6 +65,8 @@ class Entity
 
 
     public:
+
+    ~Entity(){ destroy(); }
 
     void update()
     {
@@ -124,6 +127,11 @@ public:
     std::vector<std::unique_ptr<Entity>> entities;
     float gravity = 5.9f;
     float air_density = 2.5f;
+
+
+    ~Manager(){
+
+    }
     
     void update()
     {

@@ -19,6 +19,7 @@ class Text
         int x;
         int y;
         SDL_Rect dstRect;
+        std::string currentText;
         Text(const char* fontPath, std::string text, int size, SDL_Color color, int x, int y, SDL_Renderer* rend)
         {
             this->x = x;
@@ -38,6 +39,7 @@ class Text
             }
 
             SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
+            currentText = text;
             if(!surface){
                 std::cout << "Error creating text surface" << "\n";
                 TTF_CloseFont(font);
@@ -64,6 +66,7 @@ class Text
             if(texture) { SDL_DestroyTexture(texture); texture = nullptr; }
 
             SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
+            currentText = text;
             if(!surface){
                 std::cout << "Error creating text surface" << "\n";
                 return;
@@ -77,6 +80,7 @@ class Text
         {
             if(texture) SDL_DestroyTexture(texture);
             if(font) TTF_CloseFont(font);
+            std::cout << "Destroyed Text (" << currentText << ")" << "\n";
         }
         
 };

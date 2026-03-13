@@ -11,6 +11,13 @@ struct N1Thruster
     float thrust = 200.0f;
 };
 
+struct N2Thruster 
+{
+    float mass = 5.0f;
+    float thrust = 300.0f;
+};
+
+
 
 
 class Thruster : public Component

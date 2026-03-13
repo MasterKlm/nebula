@@ -11,15 +11,17 @@ class SpriteComponent : public Component
 {
     public:
         SDL_Rect srcRect, destRect;
+        
 
         SpriteComponent() = default;
         SpriteComponent(const char* path)
         {
             setTexture(path);
         }
-        ~SpriteComponent()
+        ~SpriteComponent() override
         {
             SDL_DestroyTexture(texture);
+            std::cout << "Deleted 1 sprite" << "\n";
         }
         void setTexture(const char* path)
         {

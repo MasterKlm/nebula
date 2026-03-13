@@ -1,5 +1,4 @@
 #include "game.h"
-#include "TextureManager.h"
 #include "ECS/components.h"
 #include "ECS/TransformComponent.h"
 #include "ECS/KeyboardController.h"
@@ -15,7 +14,7 @@
 
 SDL_Renderer* Game::renderer = nullptr;
 float Game::dt = 1.0f;
-Manager manager;
+Manager* manager = new Manager();
 SDL_Event Game::event;
 Vector2d Game::camera;
 int Game::WINDOW_WIDTH = 800;
@@ -23,11 +22,11 @@ int Game::WINDOW_HEIGHT = 600;
 Text* launchTimerText = nullptr;
 Text* liftOffText = nullptr;
 Text* gravityText = nullptr;
-auto& sky_box(manager.addEntity());
-auto& rocket(manager.addEntity());
-auto& n1Thruster(manager.addEntity());
-auto& launchPad(manager.addEntity());
-auto& n1Thruster_2(manager.addEntity());
+auto& sky_box(manager->addEntity());
+auto& rocket(manager->addEntity());
+auto& n1Thruster(manager->addEntity());
+auto& launchPad(manager->addEntity());
+auto& n1Thruster_2(manager->addEntity());
 
 
 Game::Game()
@@ -65,7 +64,7 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
                 isRunning = true;
                 
                 // create FPS text
-                fpsText = std::make_unique<Text>("assets/fonts/PixelifySans-Regular.ttf", "FPS: 0", 16, SDL_Color{0,0,0,255}, 10, 40, renderer);
+                fpsText = new Text("assets/fonts/PixelifySans-Regular.ttf", "FPS: 0", 16, SDL_Color{0,0,0,255}, 10, 40, renderer);
                        
             }
         }
@@ -113,8 +112,8 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
     rocket.getComponent<Inventory>().add("thrusters", std::make_unique<Thruster>(n1Thruster_2.getComponent<Thruster>()));
 
 
-    launchTimerText = new Text("assets/fonts/PixelifySans-Bold.ttf", std::string("Launching in: ") + std::to_string(launchTime), 16, SDL_Color{0,0,0,150}, WINDOW_WIDTH/2, 10, renderer);
-    gravityText = new Text("assets/fonts/PixelifySans-Regular.ttf", "Gravity: " + std::to_string(manager.gravity), 16, SDL_Color{0,0,0,255}, 10, 70, renderer);
+    launchTimerText = new Text("assets/fonts/PixelifySans-Bold.ttf", std::string("Launching ") + rocket.getComponent<Rocket>().tag + std::string(" in: ") + std::to_string(launchTime), 16, SDL_Color{0,0,0,150}, WINDOW_WIDTH/2, 10, renderer);
+    gravityText = new Text("assets/fonts/PixelifySans-Regular.ttf", "Gravity: " + std::to_string(manager->gravity), 16, SDL_Color{0,0,0,255}, 10, 70, renderer);
 
 
 }   
@@ -130,9 +129,16 @@ void Game::startTimer()
 
 void Game::update()
 {
+    if(isRunning == false) return;
+    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+    if(keystate[SDL_SCANCODE_ESCAPE])
+    {
+        
+        setIsRunning(false);
+    }
 
-    manager.refresh();
-    manager.update();
+    manager->refresh();
+    manager->update();
 
     static Uint32 prevTicks = SDL_GetTicks();
     Uint32 now = SDL_GetTicks();
@@ -171,7 +177,7 @@ void Game::update()
         dt = std::min(remaining, fixedStep);
 
         // integrate velocity and position
-        for (auto& ePtr : manager.entities) {
+        for (auto& ePtr : manager->entities) {
             Entity* e = ePtr.get();
             if (e == &launchPad) continue; // skip gravity
             if (e == &sky_box) continue; // skip gravity
@@ -179,9 +185,10 @@ void Game::update()
             
             if (e->hasComponent<TransformComponent>()) {
                 auto& tc = e->getComponent<TransformComponent>();
-                tc.acceleration = tc.mass * manager.gravity;
+                tc.acceleration = tc.mass * manager->gravity;
                 tc.velocity.y +=  tc.acceleration * dt; // gravity -> velocity
                 tc.position.y += tc.velocity.y * dt;             // velocity -> position
+                
             }
 
             
@@ -189,7 +196,7 @@ void Game::update()
         }
 
         // update colliders after moving
-        for (auto& ePtr : manager.entities) {
+        for (auto& ePtr : manager->entities) {
             Entity* e = ePtr.get();
             if (e->hasComponent<ColliderComponent>()) {
                 e->getComponent<ColliderComponent>().update();
@@ -197,11 +204,11 @@ void Game::update()
         }
 
         // per-step collision response
-        for (auto& ePtr : manager.entities)
+        for (auto& ePtr : manager->entities)
         {
             Entity* e = ePtr.get();
             if (e == &launchPad) continue; // don't test pad vs itself
-            //for (auto& otherEPtr : manager.entities){
+            //for (auto& otherEPtr : manager->entities){
             //    Entity* otherE = otherEPtr.get();
             //    if(otherE == &e) continue;
 
@@ -240,7 +247,7 @@ void Game::update()
                     // snap rocket on top of thruster and stop vertical motion
                     rtc.position.y = thtc.position.y - (rtc.height * rtc.scale);
                     if(thruster.get()->entity->getComponent<Thruster>().active){
-                        thruster.get()->entity->getComponent<TransformComponent>().velocity.y += ( manager.gravity / rtc.mass ) * dt;
+                        thruster.get()->entity->getComponent<TransformComponent>().velocity.y += ( manager->gravity / rtc.mass ) * dt;
                     }
                     if (rtc.velocity.y > 0) {  // if moving downward (positive Y is down)
                         rtc.velocity.y = 0;     // stop it
@@ -274,9 +281,11 @@ void Game::handleEvents()
 }
 void Game::render()
 {
+    if(isRunning == false) return;
     SDL_RenderClear(renderer);
+
     
-    manager.draw();
+    manager->draw();
     
     if (fpsText) fpsText->render();
     if (launchTimerText) launchTimerText->render();
@@ -289,13 +298,18 @@ bool Game::running()
 {
     return isRunning;
 }
+void Game::setIsRunning(bool value){
+    isRunning = value;
+}
 void Game::clean()
 {
-
+    if(fpsText) delete fpsText;
     if(liftOffText) delete liftOffText;
     if(gravityText) delete gravityText;
     if(launchTimerText) delete launchTimerText;
-   
+    if(manager) delete manager;
+
+
     TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

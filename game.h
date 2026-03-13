@@ -38,13 +38,14 @@ class Game
     void handleEvents();
     void render();
     bool running();
+    void setIsRunning(bool value);
     void clean();
     void startTimer();
 
     private:
     bool isRunning;
     SDL_Window* window;
-    std::unique_ptr<Text> fpsText;
+    Text* fpsText = nullptr;
     
 };
 
