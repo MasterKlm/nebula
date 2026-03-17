@@ -9,8 +9,17 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
-
-
+#include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_sdl2.h"
+#include "imgui/backends/imgui_impl_sdlrenderer2.h"
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+#include <SDL2/SDL_opengles2.h>
+#else
+#include <SDL2/SDL_opengl.h>
+#endif
+#ifdef _WIN32
+#include <windows.h>        // SetProcessDPIAware()
+#endif
 
 using namespace std::chrono;
 
@@ -27,13 +36,15 @@ class Game
     bool launched = false;
     bool timerStarted = false;
     std::atomic<int> timerCount{-1};
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    SDL_GLContext gl_context = nullptr;
     
 
     Game();
     ~Game();
 
 
-    void init(const char* title, int xpos, int ypos, int width, int height, bool fullscreen);
+    void init(const char* title, int xpos, int ypos, int width, int height);
     void update();
     void handleEvents();
     void render();
@@ -41,6 +52,10 @@ class Game
     void setIsRunning(bool value);
     void clean();
     void startTimer();
+    void showMenu();
+    void createRocket(const char* rocket_name);
+    void destroyRocket();
+    void addThruster(const char* tag, int thrustIndex);
 
     private:
     bool isRunning;

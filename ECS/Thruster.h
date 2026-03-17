@@ -13,7 +13,7 @@ struct N1Thruster
 
 struct N2Thruster 
 {
-    float mass = 5.0f;
+    float mass = 2.0f;
     float thrust = 300.0f;
 };
 
@@ -26,7 +26,7 @@ class Thruster : public Component
         float thrust;
         float mass;
         bool active = false;
-        std::string id; 
+
         Thruster()
         {
             thrust = 0.0f;
@@ -40,7 +40,7 @@ class Thruster : public Component
         {
             thrust = blueprint.thrust;
             mass = blueprint.mass;
-            id = thrusterId; 
+ 
         }
 };
 

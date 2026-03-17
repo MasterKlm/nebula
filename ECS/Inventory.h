@@ -12,7 +12,7 @@
 class Inventory : public Component
 {
     public:
-        std::vector<std::unique_ptr<Thruster>> thrusters;
+        std::vector<Entity*> thrusters;
         int maxThrusters = 2;
        
 
@@ -22,11 +22,10 @@ class Inventory : public Component
             
         }
 
-        template <typename T>
-        void add(const char* tag, std::unique_ptr<T> component_ptr){
+        void add(const char* tag, Entity* thrusterEntity){
              if(strcmp(tag, "thrusters")== 0){
-                if(thrusters.size() < maxThrusters){
-                    thrusters.push_back(std::move(component_ptr));
+                if(thrusters.size() < (size_t)maxThrusters){
+                    thrusters.push_back(thrusterEntity);
                 }
              }
                 
